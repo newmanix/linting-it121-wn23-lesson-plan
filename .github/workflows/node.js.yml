@@ -1,4 +1,7 @@
-name: Code quality
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Code Quality
 
 on:
   push:
@@ -7,34 +10,22 @@ on:
     branches: [ "main" ]
 
 jobs:
-  code-quality:
-    name: Lint source code
+  build:
+
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Setup Node
-      uses: actions/setup-node@v1
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
       with:
-        node-version: '12.1'
-
-    - name: Cache dependencies
-      uses: actions/cache@v1
-      with:
-        path: ./node\_modules
-        key: ${{ runner.OS }}-dependencies-${{ hashFiles('\*\*/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.OS }}-dependencies-${{ env.cache-name }}-
-          ${{ runner.OS }}-dependencies-
-          ${{ runner.OS }}-
-
-    - name: Install dependencies
-      run: |
-        npm install
-
-    - name: Lint CSS
-      run: |
-        npm run lint:css
-    - name: Lint JS
-      run: |
-        npm run lint:js    
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build --if-present
+    - run: npm lint
